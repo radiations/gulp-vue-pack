@@ -1,0 +1,34 @@
+{
+  "name": "gulp-vue-pack",
+  "version": "0.0.1",
+  "description": "The multipage dev mode for Vue components packer.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radiations/gulp-vue-pack.git"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "Vue",
+    "Multipage"
+  ],
+  "author": "bullub",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/radiations/gulp-vue-pack/issues"
+  },
+  "homepage": "https://github.com/radiations/gulp-vue-pack#readme",
+  "dependencies": {
+    "gulp-util": "^3.0.7",
+    "htmlparser2": "^3.9.1",
+    "through2": "^2.0.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1"
+  }
+}
