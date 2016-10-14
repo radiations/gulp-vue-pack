@@ -21,7 +21,7 @@ const TEMPLATE_ESCAPE_REG = /'/mg
 const TEMPLATE_ESCAPE_REG2 = /\r?\n/mg;
 const SCRIPT_REPLACER_REG = /^\s*export\s+default\s*/im
 
-module.exports = function() {
+module.exports = function () {
     return through2.obj(vuePack);
 };
 
@@ -36,14 +36,14 @@ function vuePack(file, encoding, callback) {
         throw new PluginError('gulp-vue-pack', 'file不存在');
     }
 
-    if(file.isStream()) {
+    if (file.isStream()) {
         throw new PluginError('gulp-vue-pack', '只支持.vue文件');
     }
 
-    if(!file.contents) {
+    if (!file.contents) {
         //非文件,是目录
         callback();
-        return ;
+        return;
     }
 
     let fileName = path.basename(file.path, ".vue");
@@ -51,19 +51,19 @@ function vuePack(file, encoding, callback) {
     let fileContent = file.contents.toString(encoding);
 
     let contents = parseVueToContents(fileContent, fileName);
-
-     this.push(createFile(file.base, file.cwd, fileName + ".js", contents.js));
-     this.push(createFile(file.base, file.cwd, fileName + ".css", contents.css));
+    let fpath = path.dirname(file.path);
+    this.push(createFile(file.base, file.cwd, fpath, fileName + ".js", contents.js));
+    this.push(createFile(file.base, file.cwd, fpath, fileName + ".css", contents.css));
 
     callback();
 
 }
 
-function createFile(base, cwd, fileName, content) {
+function createFile(base, cwd, fpath, fileName, content) {
     return new File({
         base: base,
         cwd: cwd,
-        path: path.join(base, fileName),
+        path: path.join(fpath, fileName),
         contents: new Buffer(content)
     });
 }
@@ -77,7 +77,7 @@ function parseVueToContents(vueContent, fileName) {
     let DomUtils = HTMLParser.DomUtils;
     let domEls = HTMLParser.parseDOM(vueContent, {lowerCaseTags: true});
 
-    for(let i = 0, len = domEls.length; i < len; i ++) {
+    for (let i = 0, len = domEls.length; i < len; i++) {
         switch (domEls[i].name) {
             case SCRIPT:
                 scriptContents = DomUtils.getText(domEls[i]);
@@ -109,13 +109,13 @@ function parseVueToContents(vueContent, fileName) {
  */
 function convertToJSContent(script, template, style, fileName) {
 
-    if(!script) {
+    if (!script) {
         return "";
     }
 
     let jsFileContent = "(function(global, Vue, undefined){"
 
-    if(style && style.length > 0) {
+    if (style && style.length > 0) {
         jsFileContent += `
     (function(){
         function getCurrentScriptBase() {
@@ -126,14 +126,14 @@ function convertToJSContent(script, template, style, fileName) {
         }
         var styleLink = document.createElement('link');
         styleLink.rel = "stylesheet";
-        styleLink.href = getCurrentScriptBase() + "/" + fileName + ".css";
+        styleLink.href = getCurrentScriptBase() + "/" + "` + fileName + `.css";
         document.head.appendChild(styleLink);
     }());\n`;
     }
 
     jsFileContent += processJavascript(fileName, script, processTemplate(template), style);
 
-    jsFileContent += "global." + fileName + " = "+ fileName + ";";
+    jsFileContent += "global." + fileName + " = " + fileName + ";";
 
     jsFileContent += "}(window, Vue))";
 
