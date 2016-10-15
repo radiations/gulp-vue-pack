@@ -133,9 +133,11 @@ function convertToJSContent(script, template, style, fileName) {
 
     jsFileContent += processJavascript(fileName, script, processTemplate(template), style);
 
-    jsFileContent += "global." + fileName + " = " + fileName + ";";
+    jsFileContent += "\n\nglobal." + fileName + " = " + fileName + ";\n\n";
 
-    jsFileContent += "}(window, Vue))";
+    jsFileContent += "Vue.component('vue" + fileName.replace(/([A-Z])/g, "-$1").toLowerCase() + "', " + fileName + ");\n\n";
+
+    jsFileContent += "\n}(window, Vue));";
 
     return jsFileContent;
 }
