@@ -19,7 +19,8 @@ const TEMPLATE = "template";
 
 const TEMPLATE_ESCAPE_REG = /'/mg
 const TEMPLATE_ESCAPE_REG2 = /\r?\n/mg;
-const SCRIPT_REPLACER_REG = /^\s*export\s+default\s*/im
+const SCRIPT_REPLACER_REG = /^\s*export\s+default\s*/im;
+const VUE_COMPONENT_IMPORT_REG = /^\s*import\s+([^\s]+)\s+from\s+([^;\n]+)[\s;]+?$/mg;
 
 module.exports = function () {
     return through2.obj(vuePack);
@@ -50,11 +51,15 @@ function vuePack(file, encoding, callback) {
 
     let fileContent = file.contents.toString(encoding);
 
-    let contents = parseVueToContents(fileContent, fileName);
+    let contents = parseVueToContents(fileContent, fileName, path.dirname(file.path));
     let fpath = path.dirname(file.path);
-    this.push(createFile(file.base, file.cwd, fpath, fileName + ".js", contents.js));
-    this.push(createFile(file.base, file.cwd, fpath, fileName + ".css", contents.css));
 
+    this.push(createFile(file.base, file.cwd, fpath, fileName + ".js", contents.js));
+
+    //如果css文件无内容，则不生成css文件
+    if(contents.css.length > 0) {
+        this.push(createFile(file.base, file.cwd, fpath, fileName + ".css", contents.css));
+    }
     callback();
 
 }
@@ -68,7 +73,7 @@ function createFile(base, cwd, fpath, fileName, content) {
     });
 }
 
-function parseVueToContents(vueContent, fileName) {
+function parseVueToContents(vueContent, fileName, filePath) {
 
     let scriptContents = "";
     let styleContents = "";
@@ -86,12 +91,12 @@ function parseVueToContents(vueContent, fileName) {
                 templateContents = DomUtils.getInnerHTML(domEls[i]);
                 break;
             case STYLE:
-                styleContents = DomUtils.getText(domEls[i]);
+                styleContents = DomUtils.getText(domEls[i]).trim();
                 break;
         }
     }
 
-    let jsContent = convertToJSContent(scriptContents, templateContents, styleContents, fileName);
+    let jsContent = convertToJSContent(scriptContents, templateContents, styleContents, fileName, filePath);
 
     return {
         js: jsContent,
@@ -107,13 +112,18 @@ function parseVueToContents(vueContent, fileName) {
  * @param fileName 文件名
  * @returns {*}
  */
-function convertToJSContent(script, template, style, fileName) {
+function convertToJSContent(script, template, style, fileName, filePath) {
 
     if (!script) {
         return "";
     }
 
-    let jsFileContent = "(function(global, Vue, undefined){"
+    let jsFileContent = `(function(global, Vue, undefined){
+    if(!global.__FORGE_ES6_VUE_COMPONENTS__) {
+        global.__FORGE_ES6_VUE_COMPONENTS__ = {};
+    }
+`;
+
 
     if (style && style.length > 0) {
         jsFileContent += `
@@ -131,9 +141,12 @@ function convertToJSContent(script, template, style, fileName) {
     }());\n`;
     }
 
-    jsFileContent += processJavascript(fileName, script, processTemplate(template), style);
+    jsFileContent += processJavascript(fileName, script, processTemplate(template), style, filePath);
 
     jsFileContent += "\n\nglobal." + fileName + " = " + fileName + ";\n\n";
+
+    //伪造ES6格式的VUE组件
+    jsFileContent += "global.__FORGE_ES6_VUE_COMPONENTS__['" + filePath + "']=" + fileName + ";\n";
 
     jsFileContent += "Vue.component('vue" + fileName.replace(/([A-Z])/g, "-$1").toLowerCase() + "', " + fileName + ");\n\n";
 
@@ -159,13 +172,20 @@ function processTemplate(template) {
  * @param style
  * @returns {string|*}
  */
-function processJavascript(fileName, script, processedTemplate, style) {
+function processJavascript(fileName, script, processedTemplate, style, filePath) {
+
+    script = script.replace(VUE_COMPONENT_IMPORT_REG, function (matchedLine, variableName, vuePath, index, contents) {
+        return "var " + variableName + " = global.__FORGE_ES6_VUE_COMPONENTS__['" + path.resolve(filePath, vuePath) + "']";
+    });
 
     script = script.replace(SCRIPT_REPLACER_REG, "var " + fileName + " = Vue.extend(");
 
-    script += ");";
+    script += ");\n";
 
-    script = script.replace(/__gvptemplate/m, processedTemplate);
+
+    script += fileName + ".options.template = " + processedTemplate;
+
+    // script = script.replace(/__gvptemplate/m, processedTemplate);
 
     return script;
 
