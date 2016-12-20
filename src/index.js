@@ -146,7 +146,7 @@ function convertToJSContent(script, template, style, fileName, filePath) {
     jsFileContent += "\n\nglobal." + fileName + " = " + fileName + ";\n\n";
 
     //伪造ES6格式的VUE组件
-    jsFileContent += "global.__FORGE_ES6_VUE_COMPONENTS__['" + filePath + "']=" + fileName + ";\n";
+    jsFileContent += "global.__FORGE_ES6_VUE_COMPONENTS__['" + filePath + "/" + fileName + ".vue']=" + fileName + ";\n";
 
     jsFileContent += "Vue.component('vue" + fileName.replace(/([A-Z])/g, "-$1").toLowerCase() + "', " + fileName + ");\n\n";
 
@@ -161,7 +161,7 @@ function convertToJSContent(script, template, style, fileName, filePath) {
  * @returns {string}
  */
 function processTemplate(template) {
-    return "'" + template.replace(TEMPLATE_ESCAPE_REG, "\'").replace(TEMPLATE_ESCAPE_REG2, "\\\n") + "'";
+    return "'" + template.replace(TEMPLATE_ESCAPE_REG, "\\'").replace(TEMPLATE_ESCAPE_REG2, "\\\n") + "'";
 }
 
 /**
