@@ -110,6 +110,7 @@ function parseVueToContents(vueContent, fileName, filePath) {
  * @param template 模板内容
  * @param style 样式内容
  * @param fileName 文件名
+ * @param filePath 文件路径
  * @returns {*}
  */
 function convertToJSContent(script, template, style, fileName, filePath) {
@@ -117,6 +118,9 @@ function convertToJSContent(script, template, style, fileName, filePath) {
     if (!script) {
         return "";
     }
+
+    //兼容 windows
+    filePath.replace(/\\/g, "/");
 
     let jsFileContent = `(function(global, Vue, undefined){
     if(!global.__FORGE_ES6_VUE_COMPONENTS__) {
