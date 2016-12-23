@@ -120,7 +120,7 @@ function convertToJSContent(script, template, style, fileName, filePath) {
     }
 
     //兼容 windows
-    filePath.replace(/\\/g, "/");
+    filePath = filePath.replace(/\\/g, "/");
 
     let jsFileContent = `(function(global, Vue, undefined){
     if(!global.__FORGE_ES6_VUE_COMPONENTS__) {
@@ -179,7 +179,7 @@ function processTemplate(template) {
 function processJavascript(fileName, script, processedTemplate, style, filePath) {
 
     script = script.replace(VUE_COMPONENT_IMPORT_REG, function (matchedLine, variableName, vuePath, index, contents) {
-        return "var " + variableName + " = global.__FORGE_ES6_VUE_COMPONENTS__['" + path.resolve(filePath, vuePath) + "']";
+        return "var " + variableName + " = global.__FORGE_ES6_VUE_COMPONENTS__['" + path.resolve(filePath, vuePath).replace(/\\/g, "/") + "']";
     });
 
     script = script.replace(SCRIPT_REPLACER_REG, "var " + fileName + " = Vue.extend(");
