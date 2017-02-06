@@ -133,11 +133,22 @@ function convertToJSContent(script, template, style, fileName, filePath) {
         jsFileContent += `
     (function(){
         function getCurrentScriptBase() {
-            var src = document.currentScript.src,
-                lidx = src.lastIndexOf("/")
-        
+            var src,
+                lidx,
+                scripts;
+            
+            if (document.currentScript) {
+                src = document.currentScript.src;
+            } else {
+                scripts = document.getElementsByTagName('script');
+                src = scripts[scripts.length - 1].src;
+            }
+            
+            lidx = src.lastIndexOf("/");
+            
             return src.substring(0, lidx);
         }
+        
         var styleLink = document.createElement('link');
         styleLink.rel = "stylesheet";
         styleLink.href = getCurrentScriptBase() + "/" + "` + fileName + `.css";
